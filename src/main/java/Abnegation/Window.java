@@ -3,6 +3,7 @@ package Abnegation;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
+import util.Time;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
@@ -98,6 +99,10 @@ public class Window {
 
     }
     public void loop(){
+        //when frame started and ended
+        float beginTime = Time.getTime();
+        float endTime = Time.getTime();
+
         while(!glfwWindowShouldClose(glfwWindow)){
             //Poll events, key events, mouse events
             glfwPollEvents();
@@ -117,6 +122,12 @@ public class Window {
             }
 
             glfwSwapBuffers(glfwWindow);
+
+            //dt means delta time, time elapsed doing the frame
+            endTime = Time.getTime();
+            float dt = endTime - beginTime;
+            beginTime = endTime;
+            //getting begin time here is making sure that we also count any interuption or things like that
         }
 
     }
