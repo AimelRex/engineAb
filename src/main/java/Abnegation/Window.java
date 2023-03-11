@@ -14,9 +14,9 @@ public class Window {
     private int width, height;
     private String title;
     private long glfwWindow;
-    private float r,g,b,a;
-    private boolean fadeToBlack = false;
+    public float r,g,b,a;
     private static Window window = null;
+    private static Scene currentScene;
     private Window(){
         this.width=1920;
         this.height=1080;
@@ -25,6 +25,23 @@ public class Window {
         g=1;
         b=1;
         a=1;
+    }
+
+    public static void changeScene(int newScene){
+        switch(newScene){
+            case 0:
+                currentScene = new LevelEditorScene();
+                //currentScene.init();
+                break;
+            case 1:
+                currentScene = new LevelScene();
+                //currentScene.init();
+                break;
+            default:
+                assert false : "Unknown scene '" + newScene + "'";
+                break;
+
+        }
     }
 
     public static Window get(){
@@ -96,12 +113,13 @@ public class Window {
         // bindings available for use.
         GL.createCapabilities();
 
-
+        Window.changeScene(0);
     }
     public void loop(){
         //when frame started and ended
         float beginTime = Time.getTime();
-        float endTime = Time.getTime();
+        float endTime;
+        float dt = -1.0f;
 
         while(!glfwWindowShouldClose(glfwWindow)){
             //Poll events, key events, mouse events
@@ -109,23 +127,17 @@ public class Window {
 
             glClearColor(r, g, b, a); //import GL11 without the c
             glClear(GL_COLOR_BUFFER_BIT);//Tells openGl how to clear the buffer, flush what's above to the entire screen
-            if(fadeToBlack){
-                r = Math.max(r - 0.01f, 0);
-                g = Math.max(g - 0.01f, 0);
-                b = Math.max(b - 0.01f, 0);
 
+            if (dt >= 0){
+                currentScene.update(dt);
             }
 
-            if(KeyListener.isKeyPressed(GLFW_KEY_SPACE)){
-                fadeToBlack = true;
-                System.out.println("IT S PRESSEEEEEEDD");
-            }
 
             glfwSwapBuffers(glfwWindow);
 
             //dt means delta time, time elapsed doing the frame
             endTime = Time.getTime();
-            float dt = endTime - beginTime;
+            dt = endTime - beginTime;
             beginTime = endTime;
             //getting begin time here is making sure that we also count any interuption or things like that
         }
