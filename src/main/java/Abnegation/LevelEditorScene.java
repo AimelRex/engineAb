@@ -1,6 +1,13 @@
 package Abnegation;
 
+import org.lwjgl.BufferUtils;
+
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+
 import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL30.glBindVertexArray;
+import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public class LevelEditorScene extends Scene{
 
@@ -28,11 +35,26 @@ public class LevelEditorScene extends Scene{
     private int vertexID, fragmentID, shaderProgram;
 
     private float[] vertexArray = {
-
+        //it has to be normalized (from -1 to 1)
+        // position(x,y,z) and then color(r,g,b,a)
+        0.5f, -0.5f, 0.0f,      1.0f, 0.0f, 0.0f, 1.0f, //Bottom Right  0
+        -0.5f, 0.5f, 0.0f,      0.0f, 1.0f, 0.0f, 1.0f, //Top left      1
+        0.5f,  0.5f, 0.0f,      0.0f, 0.0f, 1.0f, 1.0f, //Top right     2
+        -0.5f,-0.5f, 0.0f,      1.0f, 1.0f, 0.0f, 1.0f, //Bottom left   3
     };
+
+    //IMPORTANT : in couter-clockwise order
+    /*
+     * x3     x2
+     *
+     * x     x1
+     * */
     private int[] elementArray = {
-
+            2,1,0, //Top right triangle
+            0,1,3  //Bottom left triangle
     };
+
+    private int vaoID, vboID, eboID;
 
     public LevelEditorScene(){
 
@@ -89,15 +111,64 @@ public class LevelEditorScene extends Scene{
             assert false : "";
         }
 
+        //GENERATE VAO, VBO, EBO, AND THEN SEND TO GPU
 
+        //everything we're about to do, do it on this array
+        vaoID = glGenVertexArrays();
+        glBindVertexArray(vaoID);
 
+        //create a float buffer of vertices, we have to send it to opengl
+        FloatBuffer vertexBuffer = BufferUtils.createFloatBuffer(vertexArray.length);
+        vertexBuffer.put(vertexArray).flip();//flip to make sure it's oriented the correct way
 
+        //Create VBO, upload the vertex buffer
+        vboID = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, vboID);
+        glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
+
+        //Create the indices and upload
+        IntBuffer elementBuffer = BufferUtils.createIntBuffer(elementArray.length);
+        elementBuffer.put(elementArray).flip();
+
+        eboID = glGenBuffers();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementBuffer, GL_STATIC_DRAW);
+
+        //Add the vertex attributes pointer, tells the gpu how to read our arrays
+        int positionsSize = 3;
+        int colorSize = 4;
+        int floatSizeBytes = 4;
+        int vertexSizeBytes = (positionsSize + colorSize) * floatSizeBytes;
+        //index is 0 because we said on glsl, location 0 is the position
+        glVertexAttribPointer(0, positionsSize, GL_FLOAT, false, vertexSizeBytes, 0);
+        glEnableVertexAttribArray(0);
+
+        //here the offset is positionsSize
+        glVertexAttribPointer(1, colorSize, GL_FLOAT, false, vertexSizeBytes, positionsSize * floatSizeBytes);
+        glEnableVertexAttribArray(1);
 
     }
 
     @Override
     public void update(float dt) {
+        //Bind shader program
+        glUseProgram(shaderProgram);
+        //Bind the VAO we're using
+        glBindVertexArray(vaoID);
 
+        //enable vertex attributes pointers
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+
+        //we tell it we want it to draw triangles, then the number of indices
+        glDrawElements(GL_TRIANGLES, elementArray.length, GL_UNSIGNED_INT, 0);
+
+        //now we have to unbind everything
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+
+        glBindVertexArray(0);//bind nothing
+        glUseProgram(0);// Use program nothing
 
     }
 
