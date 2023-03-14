@@ -1,6 +1,7 @@
 package Abnegation;
 
 import org.lwjgl.BufferUtils;
+import renderer.Shader;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -57,6 +58,7 @@ public class LevelEditorScene extends Scene{
     private int vaoID, vboID, eboID;
 
     public LevelEditorScene(){
+        Shader testShader = new Shader("assets/shaders/default.glsl");
 
     }
 
